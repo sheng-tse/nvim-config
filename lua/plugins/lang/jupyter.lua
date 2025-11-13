@@ -14,7 +14,7 @@ return {
       vim.g.molten_auto_open_output = true
       vim.g.molten_wrap_output = true
       vim.g.molten_virt_text_output = true
-      vim.g.molten_virt_lines_off_by_1 = false  -- Put Out[] below images
+      vim.g.molten_virt_lines_off_by_1 = false -- Put Out[] below images
 
       -- Note: Auto-clear images handled by keybinding instead of autocmd
     end,
@@ -169,9 +169,11 @@ return {
           local current_file = vim.fn.expand("%:p")
           if current_file:match("%.qmd$") then
             local output_file = current_file:gsub("%.qmd$", ".ipynb")
-            local cmd = string.format("!quarto convert %s --output %s",
+            local cmd = string.format(
+              "!quarto convert %s --output %s",
               vim.fn.shellescape(current_file),
-              vim.fn.shellescape(output_file))
+              vim.fn.shellescape(output_file)
+            )
             vim.cmd(cmd)
             vim.notify("Converted to " .. vim.fn.fnamemodify(output_file, ":t"), vim.log.levels.INFO)
           else

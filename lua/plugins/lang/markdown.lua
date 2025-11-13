@@ -1,11 +1,9 @@
 return {
   {
     "iamcco/markdown-preview.nvim",
-    build = function()
-      vim.fn["mkdp#util#install"]()
-    end,
+    build = "cd app && npm install",
     cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-    ft = { "markdown" },
+    ft = { "markdown", "python", "ipynb" },
     init = function()
       -- IMPORTANT: These must be set BEFORE the plugin loads
       -- Enable preview for all files (not just markdown)
@@ -73,7 +71,7 @@ return {
       vim.g.mkdp_combine_preview_auto_refresh = 1
 
       -- Recognized filetypes
-      vim.g.mkdp_filetypes = { "markdown" }
+      vim.g.mkdp_filetypes = { "markdown", "python", "ipynb" }
     end,
     keys = {
       {

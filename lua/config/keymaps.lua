@@ -8,23 +8,48 @@ vim.api.nvim_create_autocmd("FileType", {
   callback = function()
     local opts = { buffer = true, silent = true }
 
-    -- Build project
-    vim.keymap.set("n", "<leader>jb", ":terminal ./gradlew build<CR>",
-      vim.tbl_extend("force", opts, { desc = "Java: Build (Gradle)" }))
+    -- Detect if project uses Maven or Gradle
+    local function is_maven_project()
+      return vim.fn.filereadable("pom.xml") == 1 or vim.fn.filereadable("mvnw") == 1
+    end
 
-    -- Run project
-    vim.keymap.set("n", "<leader>jr", ":terminal ./gradlew run<CR>",
-      vim.tbl_extend("force", opts, { desc = "Java: Run (Gradle)" }))
+    local function is_gradle_project()
+      return vim.fn.filereadable("build.gradle") == 1 or vim.fn.filereadable("build.gradle.kts") == 1 or vim.fn.filereadable("gradlew") == 1
+    end
 
-    -- Run tests
-    vim.keymap.set("n", "<leader>jt", ":terminal ./gradlew test<CR>",
-      vim.tbl_extend("force", opts, { desc = "Java: Test (Gradle)" }))
+    if is_maven_project() then
+      -- Maven keymaps
+      vim.keymap.set("n", "<leader>jb", ":terminal mvn compile<CR>",
+        vim.tbl_extend("force", opts, { desc = "Java: Build (Maven)" }))
 
-    -- Clean build
-    vim.keymap.set("n", "<leader>jc", ":terminal ./gradlew clean build<CR>",
-      vim.tbl_extend("force", opts, { desc = "Java: Clean Build" }))
+      vim.keymap.set("n", "<leader>jr", ":terminal mvn exec:java<CR>",
+        vim.tbl_extend("force", opts, { desc = "Java: Run (Maven)" }))
 
-    -- Quick compile current file (no Gradle)
+      vim.keymap.set("n", "<leader>jt", ":terminal mvn test<CR>",
+        vim.tbl_extend("force", opts, { desc = "Java: Test (Maven)" }))
+
+      vim.keymap.set("n", "<leader>jc", ":terminal mvn clean compile<CR>",
+        vim.tbl_extend("force", opts, { desc = "Java: Clean Build (Maven)" }))
+
+      vim.keymap.set("n", "<leader>jp", ":terminal mvn package<CR>",
+        vim.tbl_extend("force", opts, { desc = "Java: Package (Maven)" }))
+
+    elseif is_gradle_project() then
+      -- Gradle keymaps
+      vim.keymap.set("n", "<leader>jb", ":terminal ./gradlew build<CR>",
+        vim.tbl_extend("force", opts, { desc = "Java: Build (Gradle)" }))
+
+      vim.keymap.set("n", "<leader>jr", ":terminal ./gradlew run<CR>",
+        vim.tbl_extend("force", opts, { desc = "Java: Run (Gradle)" }))
+
+      vim.keymap.set("n", "<leader>jt", ":terminal ./gradlew test<CR>",
+        vim.tbl_extend("force", opts, { desc = "Java: Test (Gradle)" }))
+
+      vim.keymap.set("n", "<leader>jc", ":terminal ./gradlew clean build<CR>",
+        vim.tbl_extend("force", opts, { desc = "Java: Clean Build (Gradle)" }))
+    end
+
+    -- Quick compile current file (works for both)
     vim.keymap.set("n", "<leader>jk", ":!javac %<CR>",
       vim.tbl_extend("force", opts, { desc = "Java: Compile current file" }))
   end,
