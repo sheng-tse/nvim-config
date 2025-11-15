@@ -15,7 +15,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
       return
     end
 
-    -- Apply semantic token highlights for all languages
+    -- Apply semantic token highlights for all languages except Lua (Lua uses Tree-sitter only)
     local langs = {
       "python",
       "cpp",
@@ -26,7 +26,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
       "go",
       "typescript",
       "javascript",
-      "lua",
       "sql",
       "plsql",
       "postgres",
@@ -86,6 +85,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
     -- Matching parentheses highlight (when cursor is on a bracket)
     vim.api.nvim_set_hl(0, "MatchParen", { fg = "#f7768e", bg = "#3b4261", bold = true })
+
+    -- Lua-specific: Disable LSP semantic tokens, use Tree-sitter only
+    if client.name == "lua_ls" then
+      client.server_capabilities.semanticTokensProvider = nil
+    end
 
     -- Python-specific: Set conda environment
     if client.name == "basedpyright" or client.name == "pyright" then

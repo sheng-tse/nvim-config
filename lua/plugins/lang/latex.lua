@@ -16,7 +16,7 @@ return {
       -- Compiler settings - use latexmk with continuous mode
       vim.g.vimtex_compiler_method = "latexmk"
       vim.g.vimtex_compiler_latexmk = {
-        build_dir = "",  -- Use global .latexmkrc settings
+        -- out_dir handled by ~/.latexmkrc instead
         callback = 1,
         continuous = 1,
         executable = "latexmk",
@@ -135,5 +135,17 @@ return {
       -- Split window for editing snippets
       vim.g.UltiSnipsEditSplit = "vertical"
     end,
+  },
+
+  -- LaTeX formatting with tex-fmt
+  {
+    "stevearc/conform.nvim",
+    optional = true,
+    opts = {
+      formatters_by_ft = {
+        tex = { "tex-fmt" },
+        plaintex = { "tex-fmt" },
+      },
+    },
   },
 }

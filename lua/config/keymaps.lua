@@ -47,6 +47,12 @@ vim.api.nvim_create_autocmd("FileType", {
 
       vim.keymap.set("n", "<leader>jc", ":terminal ./gradlew clean build<CR>",
         vim.tbl_extend("force", opts, { desc = "Java: Clean Build (Gradle)" }))
+
+      -- Smart run current Java file (detects class name and runs it)
+      vim.keymap.set("n", "<leader>jR", function()
+        local filename = vim.fn.expand("%:t:r") -- Get filename without extension
+        vim.cmd("terminal ./gradlew run" .. filename)
+      end, vim.tbl_extend("force", opts, { desc = "Java: Run Current Class (Gradle)" }))
     end
 
     -- Quick compile current file (works for both)

@@ -100,13 +100,98 @@ return {
   -- Jupytext: Sync .ipynb with .py files
   {
     "GCBallesteros/jupytext.nvim",
-    config = true,
+    config = function()
+      require("jupytext").setup({
+        style = "percent", -- Use # %% for cells
+        output_extension = "auto",
+        force_ft = nil,
+      })
+
+      -- Helper function to create a new notebook file
+      local function new_notebook()
+        local filename = vim.fn.input("Notebook name: ", "", "file")
+        if filename == "" then
+          return
+        end
+
+        -- Add .ipynb extension if not present
+        if not filename:match("%.ipynb$") then
+          filename = filename .. ".ipynb"
+        end
+
+        -- Get Python version dynamically
+        local python_version = "3.0.0"
+        local version_output = vim.fn.system("python3 --version 2>&1")
+        local major, minor, patch = version_output:match("Python (%d+)%.(%d+)%.(%d+)")
+        if major and minor and patch then
+          python_version = major .. "." .. minor .. "." .. patch
+        end
+
+        -- Get jupytext version and format version dynamically
+        local jupytext_version = "1.0.0"
+        local format_version = "1.3"
+        local jt_info = vim.fn.system([[python3 -c "import jupytext; from jupytext.formats import NOTEBOOK_EXTENSIONS; print(jupytext.__version__); print(NOTEBOOK_EXTENSIONS.get('.py', {}).get('format_version', '1.3'))" 2>&1]])
+        if jt_info and not jt_info:match("ModuleNotFoundError") then
+          local lines = vim.split(jt_info, "\n")
+          if lines[1] then jupytext_version = lines[1]:gsub("%s+", "") end
+          if lines[2] then format_version = lines[2]:gsub("%s+", "") end
+        end
+
+        -- Get conda environment name if available
+        local conda_env = vim.env.CONDA_DEFAULT_ENV or "python3"
+        local display_name = conda_env
+
+        -- Create minimal valid notebook JSON with dynamic metadata
+        local notebook_template = vim.fn.json_encode({
+          cells = {},
+          metadata = {
+            jupytext = {
+              text_representation = {
+                extension = ".py",
+                format_name = "percent",
+                format_version = format_version,
+                jupytext_version = jupytext_version,
+              },
+            },
+            kernelspec = {
+              display_name = display_name,
+              language = "python",
+              name = "python3",
+            },
+            language_info = {
+              name = "python",
+              version = python_version,
+            },
+          },
+          nbformat = 4,
+          nbformat_minor = 2,
+        })
+
+        -- Write to file
+        local file = io.open(filename, "w")
+        if file then
+          file:write(notebook_template)
+          file:close()
+          vim.cmd("edit " .. vim.fn.fnameescape(filename))
+          vim.notify("Created notebook: " .. filename .. " (Python " .. python_version .. ")", vim.log.levels.INFO)
+        else
+          vim.notify("Failed to create notebook", vim.log.levels.ERROR)
+        end
+      end
+
+      -- Create command and keymap
+      vim.api.nvim_create_user_command("NewNotebook", new_notebook, {})
+      vim.keymap.set("n", "<leader>jnb", new_notebook, { desc = "Create New Notebook" })
+
+      -- Insert cell marker
+      vim.keymap.set("n", "<leader>j%", function()
+        local lines = { "", "", "# %%" }
+        local row = vim.api.nvim_win_get_cursor(0)[1]
+        vim.api.nvim_buf_set_lines(0, row, row, false, lines)
+        vim.api.nvim_win_set_cursor(0, { row + 1, 0 })
+      end, { desc = "Insert Jupyter Cell Markers" })
+    end,
     lazy = false, -- Always load, don't wait for filetype
-    opts = {
-      style = "percent", -- Use # %% for cells
-      output_extension = "auto",
-      force_ft = nil,
-    },
   },
 
   -- Optional: Quarto support for .qmd files
@@ -193,5 +278,17 @@ return {
       "nvim-treesitter/nvim-treesitter",
     },
     opts = {},
+  },
+
+  -- Formatter for Jupyter notebooks and Python files
+  {
+    "stevearc/conform.nvim",
+    optional = true,
+    opts = {
+      formatters_by_ft = {
+        python = { "ruff_format", "ruff_organize_imports" },
+        ipynb = { "ruff_format", "ruff_organize_imports" },
+      },
+    },
   },
 }
