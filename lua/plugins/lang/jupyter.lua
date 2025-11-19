@@ -181,7 +181,7 @@ return {
 
       -- Create command and keymap
       vim.api.nvim_create_user_command("NewNotebook", new_notebook, {})
-      vim.keymap.set("n", "<leader>jnb", new_notebook, { desc = "Create New Notebook" })
+      vim.keymap.set("n", "<leader>nb", new_notebook, { desc = "Create New Notebook" })
 
       -- Insert cell marker
       vim.keymap.set("n", "<leader>j%", function()

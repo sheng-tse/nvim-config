@@ -75,6 +75,16 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
       -- Macros - #ff757f (coral) - C/C++ preprocessor macros
       vim.api.nvim_set_hl(0, "@lsp.type.macro." .. lang, { fg = "#ff757f" })
+
+      -- Keyword void - #f7768e (tokyonight red) - void in public static void main()
+      vim.api.nvim_set_hl(0, "@keyword.void." .. lang, { fg = "#f7768e", bold = true })
+
+      -- Main function name - #9d7cd8 (tokyonight dark purple) - main in public static void main()
+      vim.api.nvim_set_hl(0, "@function.main." .. lang, { fg = "#9d7cd8", bold = true })
+
+      -- Method calls only (.*()) - #9683EC (purple) - clientSocket.getOutputStream()
+      vim.api.nvim_set_hl(0, "@lsp.type.method.call." .. lang, { fg = "#9683EC" })
+      vim.api.nvim_set_hl(0, "@lsp.typemod.method.call." .. lang, { fg = "#9683EC" })
     end
 
     -- Operators - #89ddff (bright cyan) - + - * / = < >
@@ -161,10 +171,24 @@ vim.api.nvim_create_autocmd("ColorScheme", {
       vim.api.nvim_set_hl(0, "@function." .. lang, { fg = "#bb9af7" })
       vim.api.nvim_set_hl(0, "@method." .. lang, { fg = "#bb9af7" })
 
+      -- Method calls only (.*()) - #9683EC (purple) - clientSocket.getOutputStream()
+      vim.api.nvim_set_hl(0, "@method.call." .. lang, { fg = "#9683EC" })
+
+      -- Keyword void - #f7768e (tokyonight red) - void in public static void main()
+      vim.api.nvim_set_hl(0, "@keyword.void." .. lang, { fg = "#f7768e", bold = true })
+
+      -- Main function name - #9d7cd8 (tokyonight dark purple) - main in public static void main()
+      vim.api.nvim_set_hl(0, "@function.main." .. lang, { fg = "#9d7cd8", bold = true })
+
       -- Types and classes - #7dcfff (cyan) / #ffc777 (golden orange) - Better differentiated
       vim.api.nvim_set_hl(0, "@type." .. lang, { fg = "#7dcfff" })
       vim.api.nvim_set_hl(0, "@class." .. lang, { fg = "#ffc777", bold = true })
     end
+
+    -- Global highlight groups (non-language-specific)
+    -- Method calls only (.*()) - #9683EC (purple)
+    vim.api.nvim_set_hl(0, "@method.call", { fg = "#9683EC" })
+    vim.api.nvim_set_hl(0, "@lsp.type.method.call", { fg = "#9683EC" })
 
     -- Make sure base groups have distinct colors
     local keyword = vim.api.nvim_get_hl(0, { name = "Keyword" })
@@ -172,11 +196,29 @@ vim.api.nvim_create_autocmd("ColorScheme", {
       vim.api.nvim_set_hl(0, "Keyword", { fg = "#bb9af7", bold = true }) -- Purple
       vim.api.nvim_set_hl(0, "Include", { fg = "#ff757f", bold = true }) -- Pink/Red
     end
+
+    -- Apply void and main colors LAST to ensure they override defaults
+    vim.defer_fn(function()
+      vim.api.nvim_set_hl(0, "@keyword.void", { fg = "#f7768e", bold = true })
+      vim.api.nvim_set_hl(0, "@function.main", { fg = "#9d7cd8", bold = true })
+    end, 10)
   end,
 })
 
 -- Trigger the highlight setup for the current colorscheme
 vim.cmd("doautocmd ColorScheme")
+
+-- Ensure void and main highlighting is applied for all file types
+vim.api.nvim_create_autocmd("FileType", {
+  callback = function()
+    vim.defer_fn(function()
+      -- Apply globally without language-specific suffixes
+      vim.api.nvim_set_hl(0, "@keyword.void", { fg = "#f7768e", bold = true })
+      vim.api.nvim_set_hl(0, "@function.main", { fg = "#9d7cd8", bold = true })
+      vim.api.nvim_set_hl(0, "@method.call", { fg = "#9683EC" })
+    end, 100)
+  end,
+})
 
 -- Handle swap file conflicts automatically
 -- When a swap file is detected, automatically choose to open read-only or recover
