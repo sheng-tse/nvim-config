@@ -15,11 +15,11 @@ return {
       "DBUILastQueryInfo",
     },
     keys = {
-      { "<leader>db", "<cmd>DBUIToggle<CR>", desc = "Toggle Database UI" },
-      { "<leader>df", "<cmd>DBUIFindBuffer<CR>", desc = "Find Database Buffer" },
-      { "<leader>dr", "<cmd>DBUIRenameBuffer<CR>", desc = "Rename Database Buffer" },
-      { "<leader>dl", "<cmd>DBUILastQueryInfo<CR>", desc = "Last Query Info" },
-      { "<leader>da", "<cmd>DBUIAddConnection<CR>", desc = "Add Database Connection" },
+      { "<leader>Db", "<cmd>DBUIToggle<CR>", desc = "Toggle Database UI" },
+      { "<leader>Df", "<cmd>DBUIFindBuffer<CR>", desc = "Find Database Buffer" },
+      { "<leader>Dr", "<cmd>DBUIRenameBuffer<CR>", desc = "Rename Database Buffer" },
+      { "<leader>Dl", "<cmd>DBUILastQueryInfo<CR>", desc = "Last Query Info" },
+      { "<leader>Da", "<cmd>DBUIAddConnection<CR>", desc = "Add Database Connection" },
     },
     config = function()
       -- Database UI settings

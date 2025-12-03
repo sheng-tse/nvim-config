@@ -32,8 +32,10 @@ return {
         vim.fn.mkdir(workspace_dir, "p")
 
         -- Find root directory (looks for gradle, maven, or git)
-        local root_markers = { ".git", "mvnw", "gradlew", "pom.xml", "build.gradle", "build.gradle.kts" }
-        local root_dir = require("jdtls.setup").find_root(root_markers)
+        -- IMPORTANT: Check for multi-project root FIRST (settings.gradle*), then fall back to other markers
+        local root_dir = require("jdtls.setup").find_root({ "settings.gradle.kts", "settings.gradle" })
+          or require("jdtls.setup").find_root({ ".git", "mvnw", "gradlew", "pom.xml" })
+          or require("jdtls.setup").find_root({ "build.gradle", "build.gradle.kts" })
 
         -- Platform-specific config (Mac ARM)
         local config_dir = jdtls_path .. "/config_mac_arm"

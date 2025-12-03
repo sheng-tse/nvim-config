@@ -22,8 +22,35 @@ vim.api.nvim_create_autocmd("FileType", {
       vim.keymap.set("n", "<leader>jb", ":terminal mvn compile<CR>",
         vim.tbl_extend("force", opts, { desc = "Java: Build (Maven)" }))
 
-      vim.keymap.set("n", "<leader>jr", ":terminal mvn exec:java<CR>",
-        vim.tbl_extend("force", opts, { desc = "Java: Run (Maven)" }))
+      vim.keymap.set("n", "<leader>jr", function()
+        local current_file = vim.fn.expand("%:t:r") -- Get class name
+        local package_name = ""
+        local has_main = false
+
+        -- Read current file to check for main method and package
+        local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+        for _, line in ipairs(lines) do
+          -- Check for package declaration
+          local pkg = line:match("^%s*package%s+([%w%.]+)%s*;")
+          if pkg then
+            package_name = pkg
+          end
+
+          -- Check for main method
+          if line:match("public%s+static%s+void%s+main") then
+            has_main = true
+          end
+        end
+
+        -- If current file has main, run it directly
+        if has_main then
+          local fully_qualified = package_name ~= "" and (package_name .. "." .. current_file) or current_file
+          vim.cmd("terminal mvn exec:java -Dexec.mainClass=" .. fully_qualified)
+        else
+          -- Otherwise, use default config (will fail with helpful error if not configured)
+          vim.cmd("terminal mvn exec:java")
+        end
+      end, vim.tbl_extend("force", opts, { desc = "Java: Run Current or Default (Maven)" }))
 
       vim.keymap.set("n", "<leader>jt", ":terminal mvn test<CR>",
         vim.tbl_extend("force", opts, { desc = "Java: Test (Maven)" }))
@@ -53,9 +80,43 @@ vim.api.nvim_create_autocmd("FileType", {
         local filename = vim.fn.expand("%:t:r") -- Get filename without extension
         vim.cmd("terminal ./gradlew run" .. filename)
       end, vim.tbl_extend("force", opts, { desc = "Java: Run Current Class (Gradle)" }))
+    else
+      -- Simple Java project (no build tool) - typical IntelliJ setup
+      -- Supports both packages and non-packaged classes
+
+      vim.keymap.set("n", "<leader>jb", function()
+        local project_root = vim.fn.getcwd()
+        vim.cmd("terminal cd " .. project_root .. " && find src -name '*.java' | xargs javac -d out")
+      end, vim.tbl_extend("force", opts, { desc = "Java: Build (Simple)" }))
+
+      vim.keymap.set("n", "<leader>jr", function()
+        local project_root = vim.fn.getcwd()
+        local filename = vim.fn.expand("%:t:r") -- Get class name from current file
+
+        -- Read current file to detect package declaration
+        local lines = vim.api.nvim_buf_get_lines(0, 0, 20, false) -- Read first 20 lines
+        local package_name = nil
+        for _, line in ipairs(lines) do
+          local pkg = line:match("^%s*package%s+([%w%.]+)%s*;")
+          if pkg then
+            package_name = pkg
+            break
+          end
+        end
+
+        -- Build fully qualified class name
+        local class_name = package_name and (package_name .. "." .. filename) or filename
+
+        vim.cmd("terminal cd " .. project_root .. " && find src -name '*.java' | xargs javac -d out && java -cp out " .. class_name)
+      end, vim.tbl_extend("force", opts, { desc = "Java: Run Current Class (Simple)" }))
+
+      vim.keymap.set("n", "<leader>jc", function()
+        local project_root = vim.fn.getcwd()
+        vim.cmd("terminal cd " .. project_root .. " && rm -rf out && mkdir -p out && find src -name '*.java' | xargs javac -d out")
+      end, vim.tbl_extend("force", opts, { desc = "Java: Clean Build (Simple)" }))
     end
 
-    -- Quick compile current file (works for both)
+    -- Quick compile current file (works for all)
     vim.keymap.set("n", "<leader>jk", ":!javac %<CR>",
       vim.tbl_extend("force", opts, { desc = "Java: Compile current file" }))
   end,
