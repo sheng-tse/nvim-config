@@ -15,10 +15,6 @@ return {
             "--function-arg-placeholders",
             "--fallback-style=llvm",
           },
-          -- Use offsetEncoding for compatibility
-          capabilities = {
-            offsetEncoding = { "utf-16" },
-          },
           -- Additional settings
           init_options = {
             usePlaceholders = true,
