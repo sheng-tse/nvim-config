@@ -35,7 +35,7 @@
 | `<leader>Dl` | Last Query Info | Show last query |
 | `<leader>Da` | Add Connection | Add DB connection |
 
-### 🔧 C++ / CMake - `<leader>c*`
+### 🔧 C++ / CMake - `<leader>c*` (powered by overseer.nvim)
 
 | Key | Action | Context |
 |-----|--------|---------|
@@ -49,11 +49,8 @@
 | `<leader>cg` | CMake Generate | Generate build files |
 | `<leader>cb` | CMake Build | Build project |
 | `<leader>cr` | CMake Run | Run executable |
-| `<leader>cd` | CMake Debug | Debug with CMake |
-| `<leader>ct` | CMake Select Build Type | Choose Debug/Release |
-| `<leader>cs` | CMake Settings | Configure CMake |
 
-### ☕ Java - `<leader>j*`
+### ☕ Java - `<leader>j*` (powered by overseer.nvim)
 
 | Key | Action | Context |
 |-----|--------|---------|
@@ -62,9 +59,8 @@
 | `<leader>jt` | Test | Maven/Gradle |
 | `<leader>jc` | Clean Build | Maven/Gradle/Simple |
 | `<leader>jp` | Package | Maven only |
-| `<leader>jR` | Run Current Class | Gradle only |
 | `<leader>jk` | Compile Current File | All (javac) |
-| `<leader>jn` | New Java Class | All |
+| `<leader>jn` | New Java Class | All (helper function) |
 
 ### 🧪 Testing (Java) - `<leader>t*`
 
@@ -116,6 +112,14 @@
 | `<leader>qci` | Convert ipynb→qmd | Convert notebook |
 | `<leader>qcq` | Convert qmd→ipynb | Convert to notebook |
 
+### 📋 Overseer (Task Runner) - `<leader>o*`
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `<leader>oo` | Run Task | Show task picker |
+| `<leader>ot` | Toggle Tasks | Show/hide task list |
+| `<leader>oi` | Task Info | Show task information |
+
 ## Mnemonic Guide
 
 ### Why these prefixes?
@@ -124,10 +128,11 @@
 - **D** = **Database** (capital) - Related to 'd' but distinct
 - **j** = **Java** - Language-specific
 - **t** = **Test** - Testing commands
-- **c** = **Code** actions - Refactoring, formatting
+- **c** = **Code** actions - Refactoring, formatting (also C++ compilation)
 - **m** = **Molten** - Jupyter execution
 - **n** = **New** - Creating new files
 - **q** = **Quarto** - Document format
+- **o** = **Overseer** - Task runner (build/run/test tasks)
 - **sq** = **SQL** query (alternative prefix if needed)
 
 ## Conflict Resolution

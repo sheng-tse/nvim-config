@@ -112,38 +112,6 @@ return {
     end,
   },
 
-  -- CMake integration (optional but useful for C++ projects)
-  {
-    "Civitasv/cmake-tools.nvim",
-    ft = { "c", "cpp", "cmake" },
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-    },
-    keys = {
-      { "<leader>cg", "<cmd>CMakeGenerate<cr>", desc = "CMake Generate", ft = { "c", "cpp", "cmake" } },
-      { "<leader>cb", "<cmd>CMakeBuild<cr>", desc = "CMake Build", ft = { "c", "cpp", "cmake" } },
-      { "<leader>cr", "<cmd>CMakeRun<cr>", desc = "CMake Run", ft = { "c", "cpp", "cmake" } },
-      { "<leader>cd", "<cmd>CMakeDebug<cr>", desc = "CMake Debug", ft = { "c", "cpp", "cmake" } },
-      { "<leader>ct", "<cmd>CMakeSelectBuildType<cr>", desc = "CMake Select Build Type", ft = { "c", "cpp", "cmake" } },
-      { "<leader>cs", "<cmd>CMakeSettings<cr>", desc = "CMake Settings", ft = { "c", "cpp", "cmake" } },
-    },
-    opts = {
-      cmake_build_directory = "build/${variant:buildType}",
-      cmake_generate_options = { "-DCMAKE_EXPORT_COMPILE_COMMANDS=1" },
-      cmake_build_options = {},
-      cmake_console_position = "belowright",
-      cmake_console_size = 10,
-      cmake_show_console = "always",
-      cmake_dap_configuration = {
-        name = "CMake Debug",
-        type = "codelldb",
-        request = "launch",
-        stopOnEntry = false,
-        runInTerminal = false,
-        console = "integratedTerminal",
-      },
-    },
-  },
 
   -- C++ formatter (optional - clangd can format too)
   {
