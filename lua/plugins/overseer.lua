@@ -286,6 +286,128 @@ return {
       })
 
       -- ========================================
+      -- PYTHON TASKS
+      -- ========================================
+
+      -- Detect Python interpreter (conda/venv/uv/.venv/system)
+      local function detect_python_interpreter()
+        -- Priority order: CONDA_PREFIX > VIRTUAL_ENV > uv > .venv > system python
+
+        -- Check conda environment
+        local conda_prefix = vim.env.CONDA_PREFIX
+        if conda_prefix then
+          local python_path = conda_prefix .. "/bin/python"
+          if vim.fn.executable(python_path) == 1 then
+            return python_path, "conda"
+          end
+        end
+
+        -- Check virtualenv (venv or virtualenv)
+        local virtual_env = vim.env.VIRTUAL_ENV
+        if virtual_env then
+          local python_path = virtual_env .. "/bin/python"
+          if vim.fn.executable(python_path) == 1 then
+            return python_path, "venv"
+          end
+        end
+
+        -- Check for uv project (.venv in project root)
+        local project_root = find_project_root({ "uv.lock", "pyproject.toml", ".venv" })
+        if project_root then
+          local uv_python = project_root .. "/.venv/bin/python"
+          if vim.fn.executable(uv_python) == 1 then
+            return uv_python, "uv"
+          end
+        end
+
+        -- Check for .venv in current directory
+        local current_dir = vim.fn.expand("%:p:h")
+        local venv_python = current_dir .. "/.venv/bin/python"
+        if vim.fn.executable(venv_python) == 1 then
+          return venv_python, "venv"
+        end
+
+        -- Fallback to system python
+        return "python3", "system"
+      end
+
+      -- Python run
+      overseer.register_template({
+        name = "python run",
+        builder = function()
+          local file = vim.fn.expand("%:p")
+          local python_cmd, env_type = detect_python_interpreter()
+
+          return {
+            cmd = { python_cmd },
+            args = { file },
+            components = {
+              { "on_output_quickfix", open_on_exit = "failure" },
+              "on_complete_notify",
+              "default",
+            },
+            metadata = {
+              env_type = env_type,
+            },
+          }
+        end,
+        condition = { filetype = "python" },
+      })
+
+      -- Python run interactive (for input() programs)
+      overseer.register_template({
+        name = "python run interactive",
+        builder = function()
+          local file = vim.fn.expand("%:p")
+          local python_cmd, env_type = detect_python_interpreter()
+
+          return {
+            cmd = { python_cmd },
+            args = { file },
+            components = { "default" },
+            metadata = {
+              env_type = env_type,
+            },
+          }
+        end,
+        condition = { filetype = "python" },
+      })
+
+      -- Python run with arguments
+      overseer.register_template({
+        name = "python run with args",
+        builder = function()
+          local file = vim.fn.expand("%:p")
+          local python_cmd, env_type = detect_python_interpreter()
+
+          -- Prompt for arguments
+          local args = vim.fn.input("Arguments: ")
+          local arg_list = {}
+          if args ~= "" then
+            -- Split arguments by spaces (simple split, doesn't handle quoted strings)
+            for arg in args:gmatch("%S+") do
+              table.insert(arg_list, arg)
+            end
+          end
+
+          local all_args = { file }
+          for _, arg in ipairs(arg_list) do
+            table.insert(all_args, arg)
+          end
+
+          return {
+            cmd = { python_cmd },
+            args = all_args,
+            components = { "default" },
+            metadata = {
+              env_type = env_type,
+            },
+          }
+        end,
+        condition = { filetype = "python" },
+      })
+
+      -- ========================================
       -- JAVA TASKS
       -- ========================================
 
@@ -646,6 +768,17 @@ return {
           vim.keymap.set("n", "<leader>jc", run_task("java clean"), vim.tbl_extend("force", opts, { desc = "Java: Clean Build" }))
           vim.keymap.set("n", "<leader>jp", run_task("java package"), vim.tbl_extend("force", opts, { desc = "Java: Package" }))
           vim.keymap.set("n", "<leader>jk", run_task("java compile file"), vim.tbl_extend("force", opts, { desc = "Java: Compile File" }))
+        end,
+      })
+
+      -- Python keymaps
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "python",
+        callback = function()
+          local opts = { buffer = true, silent = true }
+          vim.keymap.set("n", "<leader>pr", run_task("python run"), vim.tbl_extend("force", opts, { desc = "Python: Run" }))
+          vim.keymap.set("n", "<leader>pi", run_task("python run interactive"), vim.tbl_extend("force", opts, { desc = "Python: Run Interactive" }))
+          vim.keymap.set("n", "<leader>pa", run_task("python run with args"), vim.tbl_extend("force", opts, { desc = "Python: Run with Args" }))
         end,
       })
 
