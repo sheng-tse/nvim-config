@@ -31,8 +31,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
       "postgres",
     }
 
+    -- Set base Comment group for all languages
+    vim.api.nvim_set_hl(0, "Comment", { fg = "#989898", italic = true })
+
     for _, lang in ipairs(langs) do
-      -- Comments - #f9f9f9 (light-gray) - Subtle, not too purple
+      -- Comments - #989898 (light-gray) - Subtle, not too purple
       vim.api.nvim_set_hl(0, "@lsp.type.comment." .. lang, { fg = "#989898", italic = true })
       vim.api.nvim_set_hl(0, "@comment." .. lang, { fg = "#989898", italic = true })
 
@@ -137,6 +140,9 @@ vim.api.nvim_create_autocmd("ColorScheme", {
       "sql",
       "plsql",
     }
+
+    -- Set base Comment group for all languages
+    vim.api.nvim_set_hl(0, "Comment", { fg = "#989898", italic = true })
 
     for _, lang in ipairs(langs) do
       -- Comments - #989898 (light-gray) - Subtle, not too purple
