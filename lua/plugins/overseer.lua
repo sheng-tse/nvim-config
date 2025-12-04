@@ -647,19 +647,46 @@ return {
         builder = function()
           local file = vim.fn.expand("%:p")
           local file_dir = vim.fn.expand("%:p:h")
-          local _, root = detect_java_project()
+          local project_type, root = detect_java_project()
 
-          -- Compile current file with classpath pointing to other compiled classes
-          return {
-            cmd = { "sh" },
-            args = { "-c", string.format("javac -d bin -cp bin -sourcepath src '%s' 2>&1 || javac '%s'", file, file) },
-            cwd = root,
-            components = {
-              { "on_output_quickfix", open_on_exit = "failure" },
-              "on_complete_notify",
-              "default",
-            },
-          }
+          -- Use Maven/Gradle compile for managed projects to handle modules properly
+          if project_type == "maven" then
+            return {
+              cmd = { "mvn" },
+              args = { "compile" },
+              cwd = root,
+              components = {
+                { "on_output_quickfix", open_on_exit = "failure" },
+                "on_complete_notify",
+                "default",
+              },
+            }
+          elseif project_type == "gradle" then
+            local gradlew = root .. "/gradlew"
+            local cmd = vim.fn.filereadable(gradlew) == 1 and gradlew or "gradle"
+            return {
+              cmd = { cmd },
+              args = { "compileJava" },
+              cwd = root,
+              components = {
+                { "on_output_quickfix", open_on_exit = "failure" },
+                "on_complete_notify",
+                "default",
+              },
+            }
+          else
+            -- Simple project: compile current file with classpath
+            return {
+              cmd = { "sh" },
+              args = { "-c", string.format("javac -d bin -cp bin -sourcepath src '%s' 2>&1 || javac '%s'", file, file) },
+              cwd = root,
+              components = {
+                { "on_output_quickfix", open_on_exit = "failure" },
+                "on_complete_notify",
+                "default",
+              },
+            }
+          end
         end,
         condition = { filetype = "java" },
       })
