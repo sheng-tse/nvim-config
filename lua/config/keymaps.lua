@@ -5,17 +5,63 @@
 -- NOTE: Java build/run keybindings (<leader>jb, jr, jt, jc, jp, jk) are now handled by overseer.nvim
 -- See lua/plugins/overseer.lua for configuration
 
+-- Helper function to detect Java source directories in project
+local function detect_java_source_dirs()
+  local cwd = vim.fn.getcwd()
+  local src_main = nil
+  local src_test = nil
+
+  -- Common Java project structures to check (in order of priority)
+  local main_patterns = {
+    "/app/src/main/java",      -- Gradle multi-module
+    "/src/main/java",          -- Standard Maven/Gradle
+    "/src",                    -- Simple project
+  }
+  local test_patterns = {
+    "/app/src/test/java",      -- Gradle multi-module
+    "/src/test/java",          -- Standard Maven/Gradle
+    "/test",                   -- Simple project
+  }
+
+  for _, pattern in ipairs(main_patterns) do
+    local path = cwd .. pattern
+    if vim.fn.isdirectory(path) == 1 then
+      src_main = path .. "/"
+      break
+    end
+  end
+
+  for _, pattern in ipairs(test_patterns) do
+    local path = cwd .. pattern
+    if vim.fn.isdirectory(path) == 1 then
+      src_test = path .. "/"
+      break
+    end
+  end
+
+  -- Fallback: create standard structure
+  if not src_main then
+    src_main = cwd .. "/src/main/java/"
+  end
+  if not src_test then
+    src_test = cwd .. "/src/test/java/"
+  end
+
+  return src_main, src_test
+end
+
 -- Helper function to create new Java class with proper package
 local function create_java_class()
-  local cwd = vim.fn.getcwd()
-  local src_main = cwd .. "/app/src/main/java/"
-  local src_test = cwd .. "/app/src/test/java/"
+  local src_main, src_test = detect_java_source_dirs()
 
   -- Ask user for class name and type
   local class_name = vim.fn.input("Class name: ")
   if class_name == "" then return end
 
-  local choices = { "1. Main source (app/src/main/java/)", "2. Test source (app/src/test/java/)" }
+  -- Build choice labels based on detected paths
+  local main_label = src_main:match("([^/]+/[^/]+/[^/]+)/?$") or "main source"
+  local test_label = src_test:match("([^/]+/[^/]+/[^/]+)/?$") or "test source"
+  local choices = { "1. Main source (" .. main_label .. ")", "2. Test source (" .. test_label .. ")" }
   local choice = vim.fn.inputlist(choices)
 
   local base_path = choice == 2 and src_test or src_main

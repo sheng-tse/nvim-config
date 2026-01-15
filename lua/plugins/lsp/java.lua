@@ -37,8 +37,31 @@ return {
           or require("jdtls.setup").find_root({ ".git", "mvnw", "gradlew", "pom.xml" })
           or require("jdtls.setup").find_root({ "build.gradle", "build.gradle.kts" })
 
-        -- Platform-specific config (Mac ARM)
-        local config_dir = jdtls_path .. "/config_mac_arm"
+        -- Detect platform for jdtls config directory
+        local function get_jdtls_config_dir()
+          local uname = vim.loop.os_uname()
+          if uname.sysname == "Darwin" then
+            -- macOS: check architecture
+            if uname.machine == "arm64" then
+              return jdtls_path .. "/config_mac_arm"
+            else
+              return jdtls_path .. "/config_mac"
+            end
+          elseif uname.sysname == "Linux" then
+            return jdtls_path .. "/config_linux"
+          elseif uname.sysname:match("Windows") then
+            return jdtls_path .. "/config_win"
+          end
+          -- Fallback: try to find any config directory
+          for _, cfg in ipairs({ "config_mac_arm", "config_mac", "config_linux", "config_win" }) do
+            if vim.fn.isdirectory(jdtls_path .. "/" .. cfg) == 1 then
+              return jdtls_path .. "/" .. cfg
+            end
+          end
+          return jdtls_path .. "/config_linux"  -- Default fallback
+        end
+
+        local config_dir = get_jdtls_config_dir()
 
         -- Java command and launcher
         local launcher_jar = vim.fn.glob(jdtls_path .. "/plugins/org.eclipse.equinox.launcher_*.jar")

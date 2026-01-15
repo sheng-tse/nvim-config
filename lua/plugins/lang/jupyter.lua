@@ -61,9 +61,34 @@ return {
   },
 
   -- Image.nvim: Display images in terminal
+  -- Requires: ImageMagick and LuaRocks installed
+  -- macOS: brew install imagemagick luarocks
+  -- Linux: apt install imagemagick luarocks (or equivalent)
   {
     "3rd/image.nvim",
-    build = "luarocks --lua-dir=/opt/homebrew/opt/luajit install magick",
+    build = function()
+      -- Try to find luajit path for luarocks
+      local luajit_paths = {
+        "/opt/homebrew/opt/luajit",     -- macOS ARM Homebrew
+        "/usr/local/opt/luajit",        -- macOS Intel Homebrew
+        "/usr",                          -- Linux system
+        "/usr/local",                    -- Linux local install
+      }
+      local luajit_dir = nil
+      for _, path in ipairs(luajit_paths) do
+        if vim.fn.isdirectory(path .. "/include/luajit-2.1") == 1
+          or vim.fn.isdirectory(path .. "/include/luajit-2.0") == 1 then
+          luajit_dir = path
+          break
+        end
+      end
+
+      local cmd = "luarocks install magick"
+      if luajit_dir then
+        cmd = "luarocks --lua-dir=" .. luajit_dir .. " install magick"
+      end
+      vim.fn.system(cmd)
+    end,
     opts = {
       backend = "kitty", -- Use kitty protocol (Ghostty supports this)
       integrations = {

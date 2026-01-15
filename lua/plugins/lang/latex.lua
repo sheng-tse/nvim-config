@@ -5,10 +5,37 @@ return {
     lazy = false, -- Load immediately for .tex files
     ft = "tex",
     config = function()
-      -- Set the PDF viewer to Skim (macOS alternative to Zathura)
-      vim.g.vimtex_view_method = "skim"
-      vim.g.vimtex_view_skim_sync = 1
-      vim.g.vimtex_view_skim_activate = 1
+      -- Auto-detect PDF viewer based on OS
+      local function get_pdf_viewer()
+        local uname = vim.loop.os_uname()
+        if uname.sysname == "Darwin" then
+          -- macOS: prefer Skim, fallback to Preview
+          if vim.fn.executable("skim") == 1 or vim.fn.isdirectory("/Applications/Skim.app") == 1 then
+            return "skim"
+          else
+            return "general"  -- Uses system default (Preview)
+          end
+        elseif uname.sysname == "Linux" then
+          -- Linux: try common PDF viewers in order of preference
+          local viewers = { "zathura", "evince", "okular", "mupdf" }
+          for _, viewer in ipairs(viewers) do
+            if vim.fn.executable(viewer) == 1 then
+              return viewer
+            end
+          end
+          return "general"  -- Fallback to xdg-open
+        end
+        return "general"
+      end
+
+      local viewer = get_pdf_viewer()
+      vim.g.vimtex_view_method = viewer
+
+      -- Skim-specific settings (macOS)
+      if viewer == "skim" then
+        vim.g.vimtex_view_skim_sync = 1
+        vim.g.vimtex_view_skim_activate = 1
+      end
 
       -- Enable automatic viewer reload on file save
       vim.g.vimtex_view_automatic = 1
