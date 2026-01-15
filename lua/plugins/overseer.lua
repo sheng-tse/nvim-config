@@ -123,15 +123,51 @@ return {
       -- C++ TASKS
       -- ========================================
 
-      -- Simple C++ compile
+      -- Simple C++ compile (auto-detects multi-file projects with src/ and include/)
       overseer.register_template({
         name = "cpp compile",
         builder = function()
           local file = vim.fn.expand("%:p")
-          local output = vim.fn.expand("%:p:r")
+          local file_dir = vim.fn.expand("%:p:h")
+          local project_root = file_dir
+
+          -- Check if we're in a src/ directory, if so go up one level
+          if file_dir:match("/src$") then
+            project_root = vim.fn.fnamemodify(file_dir, ":h")
+          end
+
+          local args = { "-std=c++17", "-Wall" }
+
+          -- Check for include/ directory
+          if vim.fn.isdirectory(project_root .. "/include") == 1 then
+            table.insert(args, "-I")
+            table.insert(args, project_root .. "/include")
+          end
+
+          -- Check for src/ directory with multiple cpp files
+          local src_dir = project_root .. "/src"
+          if vim.fn.isdirectory(src_dir) == 1 then
+            local handle = io.popen(string.format("find '%s' -name '*.cpp' 2>/dev/null", src_dir))
+            local cpp_files = handle:read("*a")
+            handle:close()
+            for cpp_file in cpp_files:gmatch("[^\n]+") do
+              table.insert(args, cpp_file)
+            end
+            -- Output to project root
+            local output_name = vim.fn.fnamemodify(project_root, ":t")
+            table.insert(args, "-o")
+            table.insert(args, project_root .. "/" .. output_name)
+          else
+            -- Single file compilation
+            table.insert(args, file)
+            table.insert(args, "-o")
+            table.insert(args, vim.fn.expand("%:p:r"))
+          end
+
           return {
             cmd = { "g++" },
-            args = { "-std=c++17", "-Wall", file, "-o", output },
+            args = args,
+            cwd = project_root,
             components = {
               { "on_output_quickfix", open_on_exit = "failure" },
               "on_complete_notify",
@@ -161,14 +197,28 @@ return {
         condition = { filetype = { "cpp", "c" } },
       })
 
-      -- C++ run executable
+      -- C++ run executable (auto-detects multi-file projects)
       overseer.register_template({
         name = "cpp run",
         builder = function()
-          local output = vim.fn.expand("%:p:r")
+          local file_dir = vim.fn.expand("%:p:h")
+          local project_root = file_dir
+          local output
+
+          -- Check if we're in a src/ directory
+          if file_dir:match("/src$") then
+            project_root = vim.fn.fnamemodify(file_dir, ":h")
+          end
+
+          -- Check for src/ directory (multi-file project)
+          if vim.fn.isdirectory(project_root .. "/src") == 1 then
+            output = project_root .. "/" .. vim.fn.fnamemodify(project_root, ":t")
+          else
+            output = vim.fn.expand("%:p:r")
+          end
+
           if vim.fn.filereadable(output) ~= 1 then
             vim.notify("Executable not found. Compile first with <leader>cc", vim.log.levels.WARN)
-            -- Return a no-op task instead of nil to avoid error
             return {
               cmd = { "echo" },
               args = { "No executable found. Compile first." },
@@ -177,21 +227,45 @@ return {
           end
           return {
             cmd = { output },
+            cwd = project_root,
             components = { "default" },
           }
         end,
         condition = { filetype = { "cpp", "c" } },
       })
 
-      -- C++ compile and run
+      -- C++ compile and run (auto-detects multi-file projects)
       overseer.register_template({
         name = "cpp build and run",
         builder = function()
-          local file = vim.fn.expand("%:p")
-          local output = vim.fn.expand("%:p:r")
+          local file_dir = vim.fn.expand("%:p:h")
+          local project_root = file_dir
+
+          if file_dir:match("/src$") then
+            project_root = vim.fn.fnamemodify(file_dir, ":h")
+          end
+
+          local src_dir = project_root .. "/src"
+          local include_flag = ""
+          local files_to_compile
+          local output
+
+          if vim.fn.isdirectory(project_root .. "/include") == 1 then
+            include_flag = "-I '" .. project_root .. "/include'"
+          end
+
+          if vim.fn.isdirectory(src_dir) == 1 then
+            files_to_compile = "'" .. src_dir .. "'/*.cpp"
+            output = project_root .. "/" .. vim.fn.fnamemodify(project_root, ":t")
+          else
+            files_to_compile = "'" .. vim.fn.expand("%:p") .. "'"
+            output = vim.fn.expand("%:p:r")
+          end
+
           return {
             cmd = { "sh" },
-            args = { "-c", string.format("g++ -std=c++17 -Wall '%s' -o '%s' && '%s'", file, output, output) },
+            args = { "-c", string.format("g++ -std=c++17 -Wall %s %s -o '%s' && '%s'", include_flag, files_to_compile, output, output) },
+            cwd = project_root,
             components = {
               { "on_output_quickfix", open_on_exit = "failure" },
               "on_complete_notify",
@@ -206,11 +280,34 @@ return {
       overseer.register_template({
         name = "cpp run interactive",
         builder = function()
-          local file = vim.fn.expand("%:p")
-          local output = vim.fn.expand("%:p:r")
+          local file_dir = vim.fn.expand("%:p:h")
+          local project_root = file_dir
+
+          if file_dir:match("/src$") then
+            project_root = vim.fn.fnamemodify(file_dir, ":h")
+          end
+
+          local src_dir = project_root .. "/src"
+          local include_flag = ""
+          local files_to_compile
+          local output
+
+          if vim.fn.isdirectory(project_root .. "/include") == 1 then
+            include_flag = "-I '" .. project_root .. "/include'"
+          end
+
+          if vim.fn.isdirectory(src_dir) == 1 then
+            files_to_compile = "'" .. src_dir .. "'/*.cpp"
+            output = project_root .. "/" .. vim.fn.fnamemodify(project_root, ":t")
+          else
+            files_to_compile = "'" .. vim.fn.expand("%:p") .. "'"
+            output = vim.fn.expand("%:p:r")
+          end
+
           return {
             cmd = { "sh" },
-            args = { "-c", string.format("g++ -std=c++17 -Wall '%s' -o '%s' && '%s'", file, output, output) },
+            args = { "-c", string.format("g++ -std=c++17 -Wall %s %s -o '%s' && '%s'", include_flag, files_to_compile, output, output) },
+            cwd = project_root,
             components = { "default" },
           }
         end,

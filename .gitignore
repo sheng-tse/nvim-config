@@ -1,8 +1,31 @@
+# Temporary and test files
 tt.*
-.tests
-doc/tags
-debug
-.repro
 foo.*
+.tests
+.repro
+
+# Generated files
+doc/tags
 *.log
+
+# Debug and data
+debug
 data
+
+# Sensitive files (never commit credentials)
+.env
+.env.*
+*.env
+.secrets
+*.key
+*.pem
+credentials*
+config.local.*
+
+# Local machine-specific settings
+.claude/settings.local.json
+
+# Backup files
+*.bak
+*.swp
+*~
