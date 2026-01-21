@@ -121,7 +121,7 @@ return {
       formatters = {
         clang_format = {
           prepend_args = {
-            "--style={BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 100}",
+            "--style={BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 300}",
           },
         },
       },

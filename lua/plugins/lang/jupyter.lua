@@ -4,7 +4,7 @@ return {
     "benlubas/molten-nvim",
     version = "^1.0.0",
     build = ":UpdateRemotePlugins",
-    lazy = false,  -- Must load on startup for remote plugins to work
+    lazy = false, -- Must load on startup for remote plugins to work
     dependencies = {
       "3rd/image.nvim",
     },
@@ -69,15 +69,17 @@ return {
     build = function()
       -- Try to find luajit path for luarocks
       local luajit_paths = {
-        "/opt/homebrew/opt/luajit",     -- macOS ARM Homebrew
-        "/usr/local/opt/luajit",        -- macOS Intel Homebrew
-        "/usr",                          -- Linux system
-        "/usr/local",                    -- Linux local install
+        "/opt/homebrew/opt/luajit", -- macOS ARM Homebrew
+        "/usr/local/opt/luajit", -- macOS Intel Homebrew
+        "/usr", -- Linux system
+        "/usr/local", -- Linux local install
       }
       local luajit_dir = nil
       for _, path in ipairs(luajit_paths) do
-        if vim.fn.isdirectory(path .. "/include/luajit-2.1") == 1
-          or vim.fn.isdirectory(path .. "/include/luajit-2.0") == 1 then
+        if
+          vim.fn.isdirectory(path .. "/include/luajit-2.1") == 1
+          or vim.fn.isdirectory(path .. "/include/luajit-2.0") == 1
+        then
           luajit_dir = path
           break
         end
@@ -156,11 +158,17 @@ return {
         -- Get jupytext version and format version dynamically
         local jupytext_version = "1.0.0"
         local format_version = "1.3"
-        local jt_info = vim.fn.system([[python3 -c "import jupytext; from jupytext.formats import NOTEBOOK_EXTENSIONS; print(jupytext.__version__); print(NOTEBOOK_EXTENSIONS.get('.py', {}).get('format_version', '1.3'))" 2>&1]])
+        local jt_info = vim.fn.system(
+          [[python3 -c "import jupytext; from jupytext.formats import NOTEBOOK_EXTENSIONS; print(jupytext.__version__); print(NOTEBOOK_EXTENSIONS.get('.py', {}).get('format_version', '1.3'))" 2>&1]]
+        )
         if jt_info and not jt_info:match("ModuleNotFoundError") then
           local lines = vim.split(jt_info, "\n")
-          if lines[1] then jupytext_version = lines[1]:gsub("%s+", "") end
-          if lines[2] then format_version = lines[2]:gsub("%s+", "") end
+          if lines[1] then
+            jupytext_version = lines[1]:gsub("%s+", "")
+          end
+          if lines[2] then
+            format_version = lines[2]:gsub("%s+", "")
+          end
         end
 
         -- Get conda environment name if available
@@ -310,11 +318,16 @@ return {
   {
     "stevearc/conform.nvim",
     optional = true,
-    opts = {
-      formatters_by_ft = {
-        python = { "ruff_format", "ruff_organize_imports" },
-        ipynb = { "ruff_format", "ruff_organize_imports" },
-      },
-    },
+    opts = function(_, opts)
+      opts.formatters_by_ft = opts.formatters_by_ft or {}
+      opts.formatters_by_ft.python = { "ruff_format", "ruff_organize_imports" }
+      opts.formatters_by_ft.ipynb = { "ruff_format", "ruff_organize_imports" }
+
+      opts.formatters = opts.formatters or {}
+      opts.formatters.ruff_format = {
+        args = { "format", "--line-length", "300", "--stdin-filename", "$FILENAME", "-" },
+      }
+      return opts
+    end,
   },
 }
